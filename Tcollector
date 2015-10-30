@@ -1,0 +1,80 @@
+### Tcollector Install
+Execution of one terminal anymore
+```sh
+    cd /usr/local
+    git clone git://github.com/OpenTSDB/tcollector.git
+    cd tcollector
+```
+##### 'startstop' Changing the file //startstop을 열어 ip를 적어준다.
+```sh
+    vim startstop
+```
+Please comment cancel the portion of the '#TSD_HOST=dns.name.of.tsd' and Enter the Ip address.(4~5 line)
+```sh
+    TSD_HOST=192.168.X.X //자기 호스트 적어주기
+```
+### Tcollector Run - Execution of one terminal anymore
+```sh
+    ./startstop start 
+
+```
+##### The connection with 'http://192.168.x.x:4242' in the web address bar
+
+
+### tcollector Test
+
+```sh
+   # root 권한으로
+   cd /usr/local/tcollector/collectors //0이란 디렉토리는 항상 실행되고 있다.
+   mkdir 0
+   
+
+```
+
+#### test code 만들기 
+
+```sh
+   vim insert_test.py //inset_test.py를 실행하면 알아서 데몬에서 실행된다
+```
+
+```sh
+
+#!/usr/bin/python //파이선 코든데 tcollector역할을 하는 
+import sys
+import urllib2
+import time
+from datetime import datetime, timedelta
+
+while 1 :
+    t = time.localtime()
+    tsec = t.tm_sec
+    if tsec%10!=0 :
+            print tsec
+            time.sleep(0.2)
+
+    else :
+        print "inha.test %d %d" % ( time.time(), tsec ) //tcollector에서 print란 tsd랑 demon에서 받을수있다
+        time.sleep(0.1)
+//http://www.onlineconversion.com/unix_time.htm -> 유닉스 타임을 넣으면 시간을 알려준다.
+```
+
+```sh
+   # 실행해 보기
+   python insert_test.py
+   
+   # 파일 권한 변경(참고 블로그 : http://blog.naver.com/radii26omg/220337573729)
+   chmod 777 insert_test.py //insest_test를 demon이 잘 access할 수 있도록 권한을 변경해준다.
+  
+   
+   # openTSDB GUI에서 확인
+   # http://127.0.0.1:4242
+   
+   # log 파일 확인
+   # 터미널에서 실행
+   tail -f /var/log/tcollector.log
+   
+   # 터미닐에서 실행 - 특정 단어만 검색
+   tail -f /var/log/tcollector.log | grep inha
+```
+
+   
