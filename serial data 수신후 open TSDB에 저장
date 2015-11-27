@@ -1,0 +1,191 @@
+exercise 6
+
+•serial 로 데이터를 수신하고 openTSDB에 저장
+
+
+•윈도우에서 USB 드라이버 설치 : http://125.7.128.52:8001/wordpress/pub/inhatc/CDM_Setup.exe // 컴퓨터에서 인식 할 수 있게 미리 설치한다.
+
+•serial 사용을 위한 python 라이브러리 설치
+
+# pyserial install
+wget http://sourceforge.net/projects/pyserial/files/pyserial/2.7/pyserial-2.7.tar.gz  /파이선에서 설치
+tar xvfz pyserial-2.7.tar.gz
+cd pyserial-2.7
+python setup.py install
+
+vim serial_to_openTSDB.py
+
+#!/usr/bin/python
+
+import time
+import os
+import sys
+import serial
+
+packet =''
+
+def bigEndian(s):
+        res = 0
+        while len(s):
+                s2 = s[0:2]
+                s = s[2:]
+                res <<=8
+                res += eval('0x' + s2)
+        return res
+
+def sese(s):
+
+        head = s[:20]
+        type = s[36:40]
+
+        serialID = s[24:36]
+        nodeID = s[55:56]
+        seq = s[40:44]
+
+        batt = s[60:64]
+
+
+        if type == "0070" : # TH
+                #print s
+                print "battery : " , bigEndian(batt) 
+                temperature = bigEndian( s[64:68] ) 
+                v1 = -39.6 + 0.01 * temperature  
+
+                t = int(time.time())
+                print "temperature %d %.2f nodeid=%d" % ( t, v1, bigEndian( nodeID ) )
+
+        else:
+                #print >> sys.stderr, "Invalid type : " + type
+                pass
+
+if __name__ == '__main__':
+
+        tmpPkt = []
+        flag = 0
+
+        test = serial.Serial("/dev/ttyUSB0", 115200) //test에 대해 값이 들어오는것을 값을 찍는다
+
+        while 1:
+                Data_in = test.read().encode('hex')
+
+                if(Data_in == '7e'):
+                        if(flag == 2) :
+                                flag =0
+                                tmpPkt.append(Data_in)
+                                packet = ''.join(tmpPkt)
+
+                                # send packet
+                                sese(packet) //시리얼로 데이타 들어오는것을 sese함수에 넣는다.(sese는 임의)
+
+                                tmpPkt = []
+                                sys.stdout.flush()
+                        else :
+                                flag = flag + 1
+                                tmpPkt.append(Data_in)
+                else :
+                        if(flag == 1 and Data_in =='45') :
+                                flag =2
+                        tmpPkt.append(Data_in)
+//스니핑 
+
+
+##ps -ax | grep opentsdb //x를 눌러 종료시 남아서 실행 돼고 있을 수 있어서 찾아준다.
+##kill -9 28120 //프로세스를 죽인다.
+
+
+
+#!/usr/bin/python
+
+import json
+import requests
+import urllib2
+import time
+import os
+import sys
+import serial
+
+packet =''
+
+url ="http://127.0.0.1:4242/api/put"  //내가 넣을 url
+
+
+def insert(temperature, id, value ):  //insert를 통해 값을 넣는다
+        data={
+                "metric":"temperature",  //metric name is temperature
+                "timestamp":time.time(), 
+                "value":value,  
+                "tags":{ 
+                        "nodeid": id  //id name is nodeid
+                }
+        }
+        ret = requests.post(url, data=json.dumps(data))
+        print ret
+        time.sleep(1)
+
+
+def bigEndian(s):
+        res = 0
+        while len(s):
+                s2 = s[0:2]
+                s = s[2:]
+                res <<=8
+                res += eval('0x' + s2)
+        return res
+def sese(s):
+
+        head = s[:20]
+        type = s[36:40]
+
+        serialID = s[24:36]
+        nodeID = s[55:56]
+        seq = s[40:44]
+
+        batt = s[60:64]
+
+
+        if type == "0070" : # TH
+                #print s
+                print "battery : " , bigEndian(batt)
+                temperature = bigEndian( s[64:68] )
+                v1 = -39.6 + 0.01 * temperature
+
+                t = int(time.time())
+                print "temperature %d %.2f nodeid=%d" % ( t, v1, bigEndian( nodeID ) )
+                insert ('temperature', nodeID, v1)  //insert 해준다.
+
+        else:
+                #print >> sys.stderr, "Invalid type : " + type
+                pass
+
+if __name__ == '__main__':
+
+        tmpPkt = []
+        flag = 0
+
+        test = serial.Serial("/dev/ttyUSB0", 115200)
+
+        while 1:
+                Data_in = test.read().encode('hex')
+                                                             while 1:
+                Data_in = test.read().encode('hex')
+
+                if(Data_in == '7e'):
+                        if(flag == 2) :
+                                flag =0
+                                tmpPkt.append(Data_in)
+                                packet = ''.join(tmpPkt)
+
+                                # send packet
+                                sese(packet)
+
+                                tmpPkt = []
+                                sys.stdout.flush()
+                        else :
+                                flag = flag + 1
+                                tmpPkt.append(Data_in)
+                else :
+                        if(flag == 1 and Data_in =='45') :
+                                flag =2
+                        tmpPkt.append(Data_in)
+                                                                                                                                           92,9          Bot
+
