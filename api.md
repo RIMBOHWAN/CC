@@ -84,7 +84,8 @@ import time
 url = "http://127.0.0.1:4242/api/query?start=1m-ago&m=sum:temperature%7Bid=1%7D&o=&yrange=%5B0:%5D&key=out%20bottom%20center%20box&wxh=740x345&autoreload=15"
 
 -> 이주소 대신
-url = "http://125.7.128.52:4242/api/query?start=6h-ago&m=sum:gyu_RC1_thl.temperature%7Bnodeid= " +param_id + "%7D&o=&yrange=%5B0:%5D&wxh=851x524&autoreload=15"
+url = "http://125.7.128.52:4242/api/query?start=6h-ago&m=sum:gyu_RC1_thl.temperature{nodeid="+param_id+"}&o=&yrange=[0:]&wxh=1037x460&autoreload=15"
+
 이주소 사용!
 
 def make_data(raw_data):
